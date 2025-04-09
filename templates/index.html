@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph Analysis</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <!-- AOS (Animate On Scroll) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --primary-hover: #3a56d4;
+            --secondary-color: #3f37c9;
+            --accent-color: #4cc9f0;
+            --success-color: #4ade80;
+            --danger-color: #f72585;
+            --dark-bg: #1a1b26;
+            --dark-card: #24283b;
+            --dark-input: #1f2335;
+            --dark-text: #a9b1d6;
+            --light-bg: #f8f9fa;
+            --transition-speed: 0.4s;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(67, 97, 238, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(67, 97, 238, 0);
+            }
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-bg);
+            color: #333;
+            transition: all var(--transition-speed) ease;
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            height: 100vh;
+            width: 280px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            padding: 25px;
+            box-shadow: var(--box-shadow);
+            color: white;
+            transition: all var(--transition-speed) ease;
+            z-index: 1000;
+            overflow-y: auto;
+            animation: fadeInUp 1s;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .sidebar-header i {
+            font-size: 2rem;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 30px;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .graph-container {
+            display: none;
+            margin-bottom: 40px;
+            animation: fadeInUp 0.8s;
+            border-radius: var(--border-radius);
+            background: white;
+            padding: 20px;
+            box-shadow: var(--box-shadow);
+            position: relative;
+        }
+
+        .graph-container.active {
+            display: block;
+        }
+
+        .graph-container h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .graph-container h2 i {
+            margin-right: 10px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .graph-container img {
+            transition: transform 0.3s ease;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .graph-container img:hover {
+            transform: scale(1.02);
+        }
+
+        .nav-link {
+            color: white;
+            padding: 14px 16px;
+            border-radius: var(--border-radius);
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            font-weight: 500;
+        }
+
+        .nav-link i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+            color: white;
+        }
+
+        .nav-link:hover i {
+            transform: scale(1.2);
+        }
+
+        .nav-link.active {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+        }
+
+        .card {
+            margin-bottom: 30px;
+            border-radius: var(--border-radius);
+            border: none;
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            color: white;
+            cursor: pointer;
+            padding: 18px 25px;
+            border: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .card-header:hover {
+            background: linear-gradient(45deg, var(--primary-hover), var(--accent-color));
+        }
+
+        .card-header i {
+            margin-right: 12px;
+            transition: transform 0.4s ease;
+        }
+
+        .card-header.collapsed i.toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .card-body {
+            padding: 25px;
+            display: block;
+            transition: all 0.3s ease;
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        .card-body.show {
+            max-height: 1000px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .form-control {
+            height: auto;
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+        }
+
+        .form-control-label {
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            padding: 0 5px;
+            background-color: white;
+            color: var(--primary-color);
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        .form-group:hover .form-control-label {
+            color: var(--accent-color);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 15px;
+        }
+
+        .custom-file-upload {
+            display: block;
+            border: 2px dashed #e9ecef;
+            border-radius: var(--border-radius);
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(67, 97, 238, 0.03);
+            color: #555;
+        }
+
+        .custom-file-upload:hover {
+            border-color: var(--primary-color);
+            background: rgba(67, 97, 238, 0.05);
+            color: var(--primary-color);
+        }
+
+        .custom-file-upload i {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            opacity: 0.7;
+            transition: transform 0.4s ease;
+        }
+
+        .custom-file-upload:hover i {
+            transform: translateY(-5px);
+            opacity: 1;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border-radius: var(--border-radius);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            border: none;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.4);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, var(--primary-hover), var(--accent-color));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.5);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 40px 0;
+            animation: fadeInUp 0.5s;
+        }
+
+        .spinner-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+        }
+
+        .spinner-outer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 4px solid rgba(67, 97, 238, 0.1);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1.5s linear infinite;
+        }
+
+        .spinner-middle {
+            position: absolute;
+            width: 70%;
+            height: 70%;
+            top: 15%;
+            left: 15%;
+            border: 4px solid rgba(67, 97, 238, 0.1);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1.2s linear infinite reverse;
+        }
+
+        .spinner-inner {
+            position: absolute;
+            width: 40%;
+            height: 40%;
+            top: 30%;
+            left: 30%;
+            border: 4px solid rgba(67, 97, 238, 0.1);
+            border-top-color: var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-top: 20px;
+            animation: pulse 1.5s infinite;
+        }
+
+        .progress-bar {
+            height: 8px;
+            border-radius: 10px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(67, 97, 238, 0.5);
+            margin-top: 15px;
+        }
+
+
+        .dark-mode {
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+
+        .dark-mode .sidebar {
+            background: linear-gradient(135deg, #3a0ca3, #4361ee);
+        }
+
+        .dark-mode .main-content {
+            background-color: var(--dark-bg);
+        }
+
+        .dark-mode .card {
+            background-color: var(--dark-card);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark-mode .card-header {
+            background: linear-gradient(45deg, #4361ee, #4cc9f0);
+        }
+
+        .dark-mode .form-control {
+            background-color: var(--dark-input);
+            border-color: #2e3347;
+            color: var(--dark-text);
+        }
+
+        .dark-mode .form-control-label {
+            background-color: var(--dark-card);
+            color: #4cc9f0;
+        }
+
+        .dark-mode .custom-file-upload {
+            border-color: #2e3347;
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--dark-text);
+        }
+
+        .dark-mode .graph-container {
+            background-color: var(--dark-card);
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s ease;
+            margin-left: auto;
+        }
+
+        .toggle-icon.rotate {
+            transform: rotate(180deg);
+        }
+
+        .page-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--accent-color);
+            padding-bottom: 10px;
+            display: inline-block;
+            animation: fadeInUp 1s;
+        }
+
+        .page-title i {
+            margin-right: 15px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Tooltip styling */
+        .tooltip-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: 220px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .tooltip-wrapper:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Input animations */
+        .form-control:focus + .input-icon {
+            transform: scale(1.2);
+            color: var(--primary-color);
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #adb5bd;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-password {
+            cursor: pointer;
+        }
+
+        /* Form field animation */
+        .form-group .ripple {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(67, 97, 238, 0.4);
+            transform: translate(-50%, -50%);
+            animation: ripple 0.6s linear;
+        }
+
+        @keyframes ripple {
+            to {
+                width: 300px;
+                height: 300px;
+                opacity: 0;
+            }
+        }
+
+        /* Section transitions */
+        .section-transition {
+            transition: all 0.5s ease;
+            transform-origin: center;
+        }
+
+        .section-transition.hide {
+            opacity: 0;
+            transform: translateY(30px);
+            pointer-events: none;
+        }
+
+        .section-transition.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Notification animation */
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            background: white;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            z-index: 1050;
+            transform: translateX(120%);
+            opacity: 0;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .notification .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+
+        .notification .close-btn:hover {
+            opacity: 1;
+        }
+        
+        /* Beautiful gradient button */
+        .gradient-btn {
+            background: linear-gradient(-45deg, #4361ee, #3a0ca3, #4cc9f0, #4361ee);
+            background-size: 400% 400%;
+            animation: gradient 5s ease infinite;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .gradient-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(67, 97, 238, 0.4);
+        }
+        
+        /* Floating labels */
+        .floating-label {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        
+        .floating-label input, 
+        .floating-label textarea {
+            width: 100%;
+            padding: 18px 15px 12px;
+            font-size: 16px;
+            border: none;
+            border-bottom: 2px solid #e9ecef;
+            background-color: transparent;
+            border-radius: 0;
+            outline: none;
+            box-shadow: none;
+            transition: all 0.3s ease;
+        }
+        
+        .floating-label label {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 16px;
+            color: #adb5bd;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        
+        .floating-label input:focus ~ label,
+        .floating-label input:not(:placeholder-shown) ~ label,
+        .floating-label textarea:focus ~ label,
+        .floating-label textarea:not(:placeholder-shown) ~ label {
+            top: 0;
+            font-size: 12px;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .floating-label input:focus,
+        .floating-label textarea:focus {
+            border-color: var(--primary-color);
+        }
+        /* Statistics cards */
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    text-align: center;
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.stat-card h4 {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+
+.stat-card p {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.dark-mode .stat-card {
+    background-color: var(--dark-card);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.dark-mode .stat-card p {
+    color: var(--dark-text);
+}
+
+/* Report section */
+#report-section .card {
+    height: 100%;
+}
+
+#report-section .card-body {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#download-pdf {
+    padding: 12px 30px;
+    font-size: 1.1rem;
+}
+
+/* PDF Preview */
+.pdf-preview {
+    width: 100%;
+    height: 500px;
+    border: 1px solid #eee;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    background: #f9f9f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pdf-preview iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.dark-mode .pdf-preview {
+    background: var(--dark-input);
+    border-color: var(--dark-input);
+}
+#summary-content{
+  min-height: 200px; /* Adjust as needed */
+  overflow: auto;
+  max-height: none;
+}
+/* Remove the max-height restriction for analysis content */
+#analysis-content {
+  max-height: none !important;
+  height: auto !important;
+  display: block !important;
+  overflow: visible !important;
+}
+
+/* Ensure the card-body for analysis is always shown */
+#analysis-section .card-body {
+  max-height: none !important;
+  height: auto !important;
+  display: block !important;
+  overflow: visible !important;
+}
+
+/* Add this to make sure the card body is properly visible */
+.card-body.show, 
+.card-body {
+  max-height: none !important;
+  overflow: visible !important;
+  height: auto !important;
+}
+
+/* Graph toggle button */
+.graph-toggle-btn {
+    background: rgba(67, 97, 238, 0.1);
+    border: none;
+    color: var(--primary-color);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.graph-toggle-btn:hover {
+    background: rgba(67, 97, 238, 0.2);
+    transform: translateY(-2px);
+}
+
+.graph-toggle-btn i {
+    margin-right: 5px;
+    transition: transform 0.3s ease;
+}
+
+.graph-toggle-btn.active i {
+    transform: rotate(180deg);
+}
+
+/* Graph view transitions */
+.graph-view {
+    position: relative;
+    min-height: 500px;
+}
+
+.graph-view > div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: all 0.5s ease;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.graph-view > div.active {
+    opacity: 1;
+    visibility: visible;
+}
+    </style>
+</head>
+<body>
+    <!-- Notification System -->
+    <div class="notification" id="notification">
+        <div class="notification-content">
+            <h5 class="notification-title">Success</h5>
+            <p class="notification-message">Your data has been processed successfully!</p>
+        </div>
+        <div class="close-btn">&times;</div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-project-diagram"></i>
+            <h4 class="mb-0">Knowledge Graph</h4>
+        </div>
+        <nav class="nav flex-column">
+            <a class="nav-link" href="#graph-view" data-target="graph-view">
+                <i class="fas fa-project-diagram"></i> Knowledge Graph
+            </a>
+            <a class="nav-link" href="#process-flow" data-target="process-flow">
+                <i class="fas fa-sitemap"></i> Process Flow
+            </a>
+            <a class="nav-link" href="#wordcloud" data-target="wordcloud">
+                <i class="fas fa-cloud"></i> Word Cloud
+            </a>
+            <a class="nav-link" href="#statistics" data-target="statistics">
+                <i class="fas fa-chart-pie"></i> Statistics
+            </a>
+            <a class="nav-link" href="#word-frequency" data-target="word-frequency">
+                <i class="fas fa-chart-line"></i> Word Frequency
+            </a>
+            <a class="nav-link" href="#ner-text" data-target="ner-text">
+                <i class="fas fa-highlighter"></i> NER Text
+            </a>
+            <a class="nav-link" href="#sentiment" data-target="sentiment">
+                <i class="fas fa-smile"></i> Sentiment Analysis
+            </a>
+            <a class="nav-link" href="#topics" data-target="topics">
+                <i class="fas fa-comments"></i> Topic Modeling
+            </a>
+            <a class="nav-link" href="#decision-tree" data-target="decision-tree">
+                <i class="fas fa-tree"></i> Decision Tree
+            </a>
+            <a class="nav-link" href="#timeline" data-target="timeline">
+                <i class="fas fa-calendar-alt"></i> Timeline
+            </a>
+            <a class="nav-link" href="#entity-table" data-target="entity-table">
+                <i class="fas fa-table"></i> Entity Table
+            </a>
+            <a class="nav-link" href="#analysis-section" data-target="analysis-section">
+                <i class="fas fa-chart-bar"></i> Analysis
+            </a>
+            <a class="nav-link" href="#summary-section" data-target="summary-section">
+                <i class="fas fa-file-alt"></i> Summary
+            </a>
+            <a class="nav-link" href="#report-section" data-target="report-section">
+                <i class="fas fa-file-pdf"></i> Report
+            </a>
+        </nav>
+        <div class="mt-4">
+            <button id="dark-mode-toggle" class="btn btn-secondary btn-block">
+                <i class="fas fa-moon mr-2"></i> Dark Mode
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1 class="page-title"><i class="fas fa-project-diagram"></i> Knowledge Graph Analysis</h1>
+        <div class="card" data-aos="fade-up">
+            <div class="card-header" id="input-header">
+                <h5 class="mb-0"><i class="fas fa-edit"></i> Input Form</h5>
+                <i class="fas fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="card-body show" id="input-body">
+                <form id="input-form" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="api_key" class="form-control-label">API Key</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="api_key" name="api_key" required>
+                            <div class="input-icon toggle-password">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                        </div>
+                        <small class="text-muted">Enter your API key for authentication</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="input_method" class="form-control-label">Input Method</label>
+                        <select class="form-control" id="input_method" name="input_method" required>
+                            <option value="" disabled selected>Select input type</option>
+                            <option value="text">Text Analysis</option>
+                            <option value="pdf">PDF Document</option>
+                            <option value="docx">Word Document</option>
+                            <option value="url">Web URL</option>
+                            <option value="youtube">YouTube Video</option>
+                        </select>
+                        <small class="text-muted">Choose how you want to input data for analysis</small>
+                    </div>
+                    
+                    <div class="form-group" id="text-input">
+                        <label for="text" class="form-control-label">Text Content</label>
+                        <textarea class="form-control" id="text" name="text" rows="5" placeholder="Enter the text you want to analyze..."></textarea>
+                        <small class="text-muted">Enter at least 100 words for better analysis</small>
+                    </div>
+                    
+                    <div class="form-group" id="file-input" style="display: none;">
+                        <label for="file" class="form-control-label">Upload File</label>
+                        <label class="custom-file-upload">
+                            <input type="file" class="form-control-file" id="file" name="file">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <div>Drag and drop your file here or click to browse</div>
+                            <div class="mt-2 text-muted" id="file-name">No file selected</div>
+                        </label>
+                        <small class="text-muted">Supported formats: PDF, DOCX (Max size: 10MB)</small>
+                    </div>
+                    
+                    <div class="form-group" id="url-input" style="display: none;">
+                        <label for="url" class="form-control-label">Website URL</label>
+                        <div class="input-group">
+                            <input type="url" class="form-control" id="url" name="url" placeholder="https://example.com">
+                            <div class="input-icon">
+                                <i class="fas fa-link"></i>
+                            </div>
+                        </div>
+                        <small class="text-muted">Enter a valid URL to scrape content for analysis</small>
+                    </div>
+                    
+                    <div class="form-group" id="youtube-input" style="display: none;">
+                        <label for="youtube_url" class="form-control-label">YouTube URL</label>
+                        <div class="input-group">
+                            <input type="url" class="form-control" id="youtube_url" name="youtube_url" placeholder="https://youtube.com/watch?v=...">
+                            <div class="input-icon">
+                                <i class="fab fa-youtube"></i>
+                            </div>
+                        </div>
+                        <small class="text-muted">Enter a YouTube video URL to analyze its transcript</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="gradient-btn btn-block">
+                            <i class="fas fa-play mr-2"></i> Process Data
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loading-spinner">
+            <div class="spinner-container">
+                <div class="spinner-outer"></div>
+                <div class="spinner-middle"></div>
+                <div class="spinner-inner"></div>
+            </div>
+            <div class="loading-text">Processing your data...</div>
+            <div class="progress">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+
+        <!-- Graph Containers -->
+        <div id="graph-view" class="graph-container" data-aos="fade-up">
+            <h2>
+                <i class="fas fa-project-diagram"></i> Knowledge Graph
+                <button id="graph-toggle" class="graph-toggle-btn">
+                    <i class="fas fa-exchange-alt"></i> Switch to Static View
+                </button>
+            </h2>
+            <div class="graph-view">
+                <div id="interactive-graph-content" class="active"></div>
+                <div id="static-graph-content">
+                    <img id="static-graph-img" src="" alt="Static Graph" class="img-fluid">
+                </div>
+            </div>
+        </div>
+
+        <div id="process-flow" class="graph-container" data-aos="fade-up">
+            <h2><i class="fas fa-sitemap"></i> Process Flow</h2>
+            <img id="process-flow-img" src="" alt="Process Flow" class="img-fluid">
+        </div>
+
+        <div id="wordcloud" class="graph-container" data-aos="fade-up">
+            <h2><i class="fas fa-cloud"></i> Word Cloud</h2>
+            <img id="wordcloud-img" src="" alt="Word Cloud" class="img-fluid">
+        </div>
+
+        <div id="statistics" class="graph-container" data-aos="fade-up">
+            <h2><i class="fas fa-chart-pie"></i> Text Statistics</h2>
+            <div class="row" id="statistics-content">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div id="word-frequency" class="graph-container" data-aos="fade-up">
+            <h2><i class="fas fa-chart-line"></i> Word Frequency</h2>
+            <img id="word-frequency-img" src="" alt="Word Frequency" class="img-fluid">
+        </div>
+
+        <div id="ner-text" class="graph-container" data-aos="fade-up">
+            <h2><i class="fas fa-highlighter"></i> NER Text</h2>
+            <div id="ner-text-content" class="content-panel"></div>
+        </div>
+
+        <div id="sentiment" class="graph-container" data-aos="fade-up">
+            <h2><i class="fas fa-smile"></i> Sentiment Analysis</h2>
+            <div id="sentiment-content" class="content-panel"></div>
+        </div>
+
+        <div id="topics" class="graph-container" data-aos="fade-up">
+            <h2><i class="fas fa-comments"></i> Topic Modeling</h2>
+            <div id="topics-content" class="content-panel"></div>
+        </div>
+
+        <div id="decision-tree" class="graph-container" data-aos="fade-up">
+            <h2><i class="fas fa-tree"></i> Decision Tree</h2>
+            <img id="decision-tree-img" src="" alt="Decision Tree" class="img-fluid">
+        </div>
+
+        <div id="timeline" class="graph-container" data-aos="fade-up">
+            <h2><i class="fas fa-calendar-alt"></i> Timeline</h2>
+            <div id="timeline-content" class="content-panel"></div>
+        </div>
+
+        <div id="entity-table" class="graph-container" data-aos="fade-up">
+            <h2><i class="fas fa-table"></i> Entity Table</h2>
+            <div id="entity-table-content" class="content-panel"></div>
+        </div>
+
+        <div id="analysis-section" class="graph-container" data-aos="fade-up">
+            <h2><i class="fas fa-chart-bar"></i> Analysis</h2>
+            <div class="card">
+                <div class="card-body" id="analysis-content">
+                    <!-- Analysis content will go here -->
+                </div>
+            </div>
+        </div>
+        <div id="summary-section" class="graph-container" data-aos="fade-up">
+            <h2><i class="fas fa-file-alt"></i> Summary</h2>
+            <div class="card">
+                <div class="card-body" id="summary-content">
+                    <!-- Summary content will go here -->
+                </div>
+            </div>
+        </div>
+
+        <div id="report-section" class="graph-container" data-aos="fade-up">
+            <h2><i class="fas fa-file-pdf"></i> Report & Download</h2>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-file-pdf"></i> PDF Report Preview</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="pdf-preview" id="pdf-preview-container">
+                                <p class="text-muted text-center">PDF preview will appear here after processing</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <button id="download-pdf" class="gradient-btn">
+                    <i class="fas fa-download mr-2"></i> Download PDF Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- AOS (Animate On Scroll) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script>
+        // Initialize AOS
+  AOS.init({
+      duration: 800,
+      easing: 'ease-in-out',
+      once: true
+  });
+  
+  // Handle form submission
+  $('#input-form').on('submit', function (e) {
+      e.preventDefault();
+      
+      // Show loading spinner with animation
+      $('#loading-spinner').show();
+      animateProgressBar();
+      
+      // Add a ripple effect to button
+      const btn = $(this).find('button[type="submit"]');
+      const x = e.clientX - btn.offset().left;
+      const y = e.clientY - btn.offset().top;
+      
+      const ripple = $('<span class="ripple"></span>');
+      ripple.css({
+          left: x + 'px',
+          top: y + 'px'
+      });
+      
+      btn.append(ripple);
+      
+      setTimeout(() => {
+          ripple.remove();
+      }, 600);
+      
+      const formData = new FormData(this);
+      
+      // Simulate processing with animations
+      fetch('/process', {
+          method: 'POST',
+          body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+          setTimeout(() => {
+              $('#loading-spinner').hide();
+              if (data.success) {
+                  // Show notification
+                  showNotification('Success', 'Your data has been processed successfully!');
+                  
+                  // Update graph containers with data and animations
+                  updateGraphContainers(data);
+                  
+                  // Show the graph view with animation
+                  $('.graph-container').hide();
+                  $('#graph-view').fadeIn(500);
+                  $('.nav-link').removeClass('active');
+                  $('.nav-link[data-target="graph-view"]').addClass('active');
+              } else {
+                  showNotification('Error', data.error, 'error');
+              }
+          }, 1500); // Add slight delay for better UX
+      })
+      .catch(error => {
+          setTimeout(() => {
+              $('#loading-spinner').hide();
+              console.error('Error:', error);
+              showNotification('Error', 'An error occurred while processing your request.', 'error');
+          }, 1500);
+      });
+  });
+  
+  // Animate progress bar
+  function animateProgressBar() {
+      const progressBar = $('#progress-bar');
+      let width = 0;
+      const interval = setInterval(() => {
+          if (width >= 90) {
+              clearInterval(interval);
+          } else {
+              width += Math.random() * 10;
+              if (width > 90) width = 90;
+              progressBar.css('width', width + '%');
+          }
+      }, 300);
+      
+      // Store interval ID to clear it when processing is complete
+      window.progressInterval = interval;
+  }
+  
+  // Update graph containers with data
+  function updateGraphContainers(data) {
+      console.log("Updating graph containers with data:", data);
+  
+      // Update static graph image
+      if (data.static_graph) {
+          $('#static-graph-img').attr('src', data.static_graph);
+      } else {
+          console.warn("Static graph data is missing.");
+      }
+  
+      // Update text statistics section
+      if (data.text_stats) {
+          const statsHtml = `
+              <div class="col-md-3">
+                  <div class="stat-card">
+                      <h4><i class="fas fa-font"></i> Text Length</h4>
+                      <p>${data.text_stats.text_length || 'N/A'} characters</p>
+                  </div>
+              </div>
+              <div class="col-md-3">
+                  <div class="stat-card">
+                      <h4><i class="fas fa-cubes"></i> Chunks</h4>
+                      <p>${data.text_stats.chunk_count || 'N/A'}</p>
+                  </div>
+              </div>
+              <div class="col-md-3">
+                  <div class="stat-card">
+                      <h4><i class="fas fa-tags"></i> Entities</h4>
+                      <p>${data.text_stats.total_entities || 'N/A'}</p>
+                  </div>
+              </div>
+              <div class="col-md-3">
+                  <div class="stat-card">
+                      <h4><i class="fas fa-link"></i> Relationships</h4>
+                      <p>${data.text_stats.total_relationships || 'N/A'}</p>
+                  </div>
+              </div>
+          `;
+          $('#statistics-content').html(statsHtml).hide().fadeIn(800);
+      } else {
+          console.warn("Text statistics data is missing.");
+      }
+  
+      // Render interactive graph using new method
+      if (data.interactive_graph_data) {
+          renderInteractiveGraph(data.interactive_graph_data);
+      } else if (data.interactive_graph) {
+          $('#interactive-graph-content').html(data.interactive_graph);
+      } else {
+          console.warn("Interactive graph data is missing.");
+      }
+  
+      // Update process flow visualization
+      if (data.visualizations?.process_flow) {
+          $('#process-flow-img').attr('src', data.visualizations.process_flow).hide().fadeIn(800);
+      } else {
+          console.warn("Process flow visualization is missing.");
+      }
+  
+      // Update word cloud visualization
+      if (data.visualizations?.wordcloud) {
+          $('#wordcloud-img').attr('src', data.visualizations.wordcloud).hide().fadeIn(800);
+      } else {
+          console.warn("Word cloud visualization is missing.");
+      }
+  
+      // Update word frequency visualization
+      if (data.visualizations?.word_frequency) {
+          $('#word-frequency-img').attr('src', data.visualizations.word_frequency).hide().fadeIn(800);
+      } else {
+          console.warn("Word frequency visualization is missing.");
+      }
+  
+      // Update NER text content
+      if (data.visualizations?.ner_text) {
+          $('#ner-text-content').html(data.visualizations.ner_text).hide().fadeIn(800);
+      } else {
+          console.warn("NER text content is missing.");
+      }
+  
+      // Update sentiment analysis content
+      if (data.visualizations?.sentiment) {
+          $('#sentiment-content').html(data.visualizations.sentiment).hide().fadeIn(800);
+      } else {
+          console.warn("Sentiment analysis content is missing.");
+      }
+  
+      // Update topic modeling content
+      if (data.visualizations?.topics) {
+          $('#topics-content').html(data.visualizations.topics).hide().fadeIn(800);
+      } else {
+          console.warn("Topic modeling content is missing.");
+      }
+  
+      // Update decision tree visualization
+      if (data.visualizations?.decision) {
+          $('#decision-tree-img').attr('src', data.visualizations.decision).hide().fadeIn(800);
+      } else {
+          console.warn("Decision tree visualization is missing.");
+      }
+  
+      // Update timeline content
+      if (data.visualizations?.timeline) {
+          $('#timeline-content').html(data.visualizations.timeline).hide().fadeIn(800);
+      } else {
+          console.warn("Timeline content is missing.");
+      }
+  
+      // Update entity table content
+      if (data.visualizations?.entity_table) {
+          $('#entity-table-content').html(data.visualizations.entity_table).hide().fadeIn(800);
+      } else {
+          console.warn("Entity table content is missing.");
+      }
+  
+      // Update analysis section
+      if (data.explanation) {
+      console.log("Updating analysis content...");
+      $('#analysis-content').html(data.explanation).hide().fadeIn(800);
+  } else {
+      console.warn("Explanation (analysis) data is missing.");
+      $('#analysis-content').html('<p>No analysis available.</p>').hide().fadeIn(800);
+  }
+      // Update summary section
+      if (data.summary) {
+          console.log("Updating summary content...");
+          $('#summary-content').html(data.summary).hide().fadeIn(800);
+      } else {
+          console.warn("Summary data is missing.");
+          $('#summary-content').html('<p>No summary available.</p>').hide().fadeIn(800);
+      }
+  
+      // Handle PDF preview
+      if (data.pdf) {
+          const pdfPreview = `<iframe src="data:application/pdf;base64,${data.pdf}" 
+                                  width="100%" 
+                                  height="500px" 
+                                  style="border: none;"></iframe>`;
+          $('#pdf-preview-container').html(pdfPreview);
+      } else {
+          console.warn("PDF data is missing.");
+          $('#pdf-preview-container').html('<p class="text-muted text-center">No PDF preview available.</p>');
+      }
+  
+      // Handle PDF download
+      $('#download-pdf').off('click').on('click', function () {
+          if (data.pdf) {
+              const link = document.createElement('a');
+              link.href = 'data:application/pdf;base64,' + data.pdf;
+              link.download = 'knowledge_graph_report.pdf';
+              link.click();
+          } else {
+              alert("No PDF report available for download.");
+          }
+      });
+  }
+  
+  // Function to render interactive graph
+  function renderInteractiveGraph(graphData) {
+      // Clear previous content
+      $('#interactive-graph-content').empty();
+      
+      // Create container div
+      const container = $('<div id="network-container" style="width: 100%; height: 700px;"></div>');
+      $('#interactive-graph-content').append(container);
+      
+      // Load vis-network library if not already loaded
+      if (typeof vis === 'undefined') {
+          const script = document.createElement('script');
+          script.src = 'https://unpkg.com/vis-network/standalone/umd/vis-network.min.js';
+          script.onload = function() {
+              createNetwork(graphData);
+          };
+          document.head.appendChild(script);
+      } else {
+          createNetwork(graphData);
+      }
+      
+      function createNetwork(data) {
+          // Create nodes and edges datasets
+          const nodes = new vis.DataSet(data.nodes);
+          const edges = new vis.DataSet(data.edges);
+          
+          // Create the network
+          const network = new vis.Network(
+              document.getElementById('network-container'),
+              { nodes, edges },
+              {
+                  nodes: {
+                      borderWidth: 2,
+                      shadow: {
+                          enabled: true,
+                          color: 'rgba(0,0,0,0.2)',
+                          size: 10,
+                          x: 3,
+                          y: 3
+                      },
+                      font: {
+                          size: 14,
+                          face: 'Arial',
+                          bold: {
+                              color: '#333333'
+                          }
+                      }
+                  },
+                  edges: {
+                      arrows: 'to',
+                      font: {
+                          size: 12,
+                          face: 'Arial',
+                          align: 'middle'
+                      },
+                      selectionWidth: 2,
+                      smooth: {
+                          type: 'cubicBezier',
+                          roundness: 0.4
+                      }
+                  },
+                  physics: {
+                      enabled: true,
+                      solver: 'forceAtlas2Based',
+                      forceAtlas2Based: {
+                          gravitationalConstant: -100,
+                          centralGravity: 0.005,
+                          springLength: 200,
+                          avoidOverlap: 0.5
+                      },
+                      stabilization: {
+                          enabled: true,
+                          iterations: 1000,
+                          updateInterval: 100
+                      }
+                  },
+                  interaction: {
+                      hover: true,
+                      tooltipDelay: 200,
+                      keyboard: {
+                          enabled: true,
+                          speed: {
+                              x: 10,
+                              y: 10,
+                              zoom: 0.02
+                          }
+                      }
+                  }
+              }
+          );
+  
+          // Add event handlers
+          network.on("doubleClick", function(params) {
+              if(params.nodes.length > 0) {
+                  const nodeId = params.nodes[0];
+                  const node = nodes.get(nodeId);
+                  alert(`Node clicked: ${node.label}\nType: ${node.group}`);
+              }
+          });
+  
+          network.on("oncontext", function(params) {
+              params.event.preventDefault();
+              if(params.nodes.length > 0) {
+                  const nodeId = params.nodes[0];
+                  const node = nodes.get(nodeId);
+                  const menu = `<div style="position:absolute;left:${params.pointer.DOM.x}px;top:${params.pointer.DOM.y}px;
+                                  background:white;padding:10px;border:1px solid #ccc;box-shadow:2px 2px 5px rgba(0,0,0,0.2)">
+                                  <b>${node.label}</b><hr>
+                                  Type: ${node.group}<br>
+                                  Connections: ${network.getConnectedEdges(nodeId).length}</div>`;
+                  document.body.insertAdjacentHTML('beforeend', menu);
+                  setTimeout(() => document.body.lastChild.remove(), 2000);
+              }
+          });
+      }
+  }
+  
+  // Toggle between static and interactive graph views
+  $('#graph-toggle').on('click', function() {
+      const $btn = $(this);
+      const $interactive = $('#interactive-graph-content');
+      const $static = $('#static-graph-content');
+      
+      if ($interactive.hasClass('active')) {
+          // Switch to static view
+          $interactive.removeClass('active');
+          $static.addClass('active');
+          $btn.html('<i class="fas fa-exchange-alt"></i> Switch to Interactive View');
+      } else {
+          // Switch to interactive view
+          $static.removeClass('active');
+          $interactive.addClass('active');
+          $btn.html('<i class="fas fa-exchange-alt"></i> Switch to Static View');
+      }
+  });
+  
+  // Handle sidebar navigation with animations
+  $('.nav-link').on('click', function (e) {
+      e.preventDefault();
+      const target = $(this).data('target');
+      
+      // Animate graph container transitions
+      $('.graph-container').fadeOut(300);
+      setTimeout(() => {
+          $('#' + target).fadeIn(500);
+      }, 300);
+      
+      // Update active link with animation
+      $('.nav-link').removeClass('active');
+      $(this).addClass('active');
+      
+      // Add a ripple effect
+      const ripple = $('<span class="ripple"></span>');
+      const x = e.clientX - $(this).offset().left;
+      const y = e.clientY - $(this).offset().top;
+      ripple.css({
+          left: x + 'px',
+          top: y + 'px'
+      });
+      $(this).append(ripple);
+      setTimeout(() => {
+          ripple.remove();
+      }, 600);
+  });
+  
+  // Show/hide input fields based on selected method with animations
+  $('#input_method').on('change', function () {
+      const method = $(this).val();
+      $('#text-input, #file-input, #url-input, #youtube-input').fadeOut(300);
+      
+      setTimeout(() => {
+          if (method === 'text') {
+              $('#text-input').fadeIn(500);
+          } else if (method === 'pdf' || method === 'docx') {
+              $('#file-input').fadeIn(500);
+          } else if (method === 'url') {
+              $('#url-input').fadeIn(500);
+          } else if (method === 'youtube') {
+              $('#youtube-input').fadeIn(500);
+          }
+      }, 300);
+  });
+  
+  // Toggle dark mode with animation
+  $('#dark-mode-toggle').on('click', function () {
+      $('body').toggleClass('dark-mode');
+      $(this).find('i').toggleClass('fa-moon fa-sun');
+      
+      // Update button text based on mode
+      const isDarkMode = $('body').hasClass('dark-mode');
+      $(this).html(isDarkMode ? '<i class="fas fa-sun mr-2"></i> Light Mode' : '<i class="fas fa-moon mr-2"></i> Dark Mode');
+      
+      // Add transition animation
+      $('body').css('transition', 'background-color 0.5s ease, color 0.5s ease');
+      setTimeout(() => {
+          $('body').css('transition', '');
+      }, 500);
+  });
+  
+  // Collapsible input form with animation
+  $('#input-header').on('click', function () {
+      $('#input-body').toggleClass('show');
+      $(this).find('.toggle-icon').toggleClass('rotate');
+  });
+  
+  // Show notification
+  function showNotification(title, message, type = 'success') {
+      const notification = $('#notification');
+      notification.find('.notification-title').text(title);
+      notification.find('.notification-message').text(message);
+      
+      // Set notification color based on type
+      if (type === 'error') {
+          notification.css('border-left-color', 'var(--danger-color)');
+      } else {
+          notification.css('border-left-color', 'var(--success-color)');
+      }
+      
+      // Show notification
+      notification.addClass('show');
+      
+      // Hide after 5 seconds
+      setTimeout(() => {
+          notification.removeClass('show');
+      }, 5000);
+  }
+  
+  // Close notification
+  $('.notification .close-btn').on('click', function() {
+      $('#notification').removeClass('show');
+  });
+  
+  // Toggle password visibility
+  $('.toggle-password').on('click', function() {
+      const input = $(this).closest('.input-group').find('input');
+      const icon = $(this).find('i');
+      
+      if (input.attr('type') === 'password') {
+          input.attr('type', 'text');
+          icon.removeClass('fa-eye').addClass('fa-eye-slash');
+      } else {
+          input.attr('type', 'password');
+          icon.removeClass('fa-eye-slash').addClass('fa-eye');
+      }
+  });
+  
+  // File input display filename
+  $('#file').on('change', function() {
+      const fileName = $(this).val().split('\\').pop();
+      $('#file-name').text(fileName || 'No file selected');
+      
+      if (fileName) {
+          $('#file-name').css('color', 'var(--primary-color)');
+      } else {
+          $('#file-name').css('color', '');
+      }
+  });
+  
+  // Apply ripple effect to buttons
+  $('.btn').on('mousedown', function(e) {
+      const x = e.pageX - $(this).offset().left;
+      const y = e.pageY - $(this).offset().top;
+      
+      const ripple = $('<span class="ripple"></span>');
+      ripple.css({
+          left: x + 'px',
+          top: y + 'px'
+      });
+      
+      $(this).append(ripple);
+      
+      setTimeout(() => {
+          ripple.remove();
+      }, 600);
+  });
+  
+  // Add input focus effects
+  $('.form-control').on('focus', function() {
+      $(this).parent().addClass('focused');
+  }).on('blur', function() {
+      $(this).parent().removeClass('focused');
+  });
+  
+  // Initialize tooltips
+  $('[data-toggle="tooltip"]').tooltip();
+  
+  // Initialize form labels animation
+  $('.floating-label input, .floating-label textarea').on('focus', function() {
+      $(this).parent().addClass('active');
+  }).on('blur', function() {
+      if ($(this).val() === '') {
+          $(this).parent().removeClass('active');
+      }
+  });
+  
+  // Check if inputs have values on page load
+  $('.floating-label input, .floating-label textarea').each(function() {
+      if ($(this).val() !== '') {
+          $(this).parent().addClass('active');
+      }
+  });
+  
+  // Add keyboard shortcuts
+  $(document).on('keydown', function(e) {
+      // Alt + D to toggle dark mode
+      if (e.altKey && e.key === 'd') {
+          $('#dark-mode-toggle').click();
+      }
+      
+      // Alt + P to open process form
+      if (e.altKey && e.key === 'p') {
+          if (!$('#input-body').hasClass('show')) {
+              $('#input-header').click();
+          }
+      }
+  });
+      </script>
+  </body>
+  </html>
