@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph Builder - Knowledge Graph Construction from Unstructured Data</title>
+    <style>
+        :root {
+            --primary: #4568dc;
+            --primary-light: #6788ff;
+            --secondary: #3f5efb;
+            --gradient-light: linear-gradient(135deg, #4568dc 0%, #3f5efb 100%);
+            --gradient-dark: linear-gradient(135deg, #3a4bc1 0%, #3046c9 100%);
+            --accent: #00c9ff;
+            --light-bg: #f8faff;
+            --dark-text: #333;
+            --light-text: #fff;
+            --gray-text: #666;
+            --card-bg: #ffffff;
+            --shadow: 0 10px 20px rgba(69, 104, 220, 0.15);
+            --border-radius: 10px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: var(--gradient-light);
+            color: var(--light-text);
+            padding: 20px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .logo img {
+            margin-right: 10px;
+            height: 40px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin-left: 30px;
+        }
+
+        .nav-links a {
+            color: var(--light-text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        .btn {
+            background: var(--accent);
+            color: var(--light-text);
+            padding: 10px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: #00b0e0;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 201, 255, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--light-text);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        section {
+            padding: 100px 0;
+        }
+
+        .hero {
+            background: var(--gradient-light);
+            color: var(--light-text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding-top: 80px;
+        }
+
+        .hero-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .hero-text {
+            flex: 1;
+            padding-right: 40px;
+        }
+
+        .hero-image {
+            flex: 1;
+            text-align: center;
+        }
+
+        .hero-image img {
+            max-width: 100%;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+            color: var(--primary);
+        }
+
+        h2:after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: var(--gradient-light);
+            margin: 15px auto;
+            border-radius: 2px;
+        }
+
+        h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        p {
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .features {
+            background-color: var(--light-bg);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(69, 104, 220, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 50px;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .how-it-works {
+            background: var(--light-bg);
+        }
+
+        .steps-container {
+            position: relative;
+            margin-top: 50px;
+        }
+
+        .process-line {
+            position: absolute;
+            height: 4px;
+            background: var(--gradient-light);
+            top: 100px;
+            left: 50px;
+            right: 50px;
+            z-index: 1;
+            border-radius: 2px;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step {
+            flex: 1;
+            max-width: 200px;
+            text-align: center;
+            position: relative;
+        }
+
+        .step-circle {
+            width: 100px;
+            height: 100px;
+            background: var(--card-bg);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+            border: 4px solid var(--primary-light);
+            transition: all 0.3s ease;
+        }
+
+        .step-circle img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .step:hover .step-circle {
+            transform: scale(1.1);
+            background: var(--primary-light);
+        }
+
+        .step:hover .step-circle img {
+            filter: brightness(0) invert(1);
+        }
+
+        .step-number {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 30px;
+            background: var(--accent);
+            color: var(--light-text);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .tech-stack {
+            background: var(--gradient-dark);
+            color: var(--light-text);
+        }
+
+        .tech-stack h2 {
+            color: var(--light-text);
+        }
+
+        .tech-stack h2:after {
+            background: var(--accent);
+        }
+
+        .tech-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .tech-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tech-item:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .tech-icon {
+            height: 60px;
+            margin-bottom: 15px;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+        }
+
+        .tech-item h3 {
+            color: var(--light-text);
+        }
+
+        .team {
+            background: var(--card-bg);
+        }
+
+        .team-members {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 50px;
+            flex-wrap: wrap;
+        }
+
+        .team-member {
+            flex: 1;
+            min-width: 250px;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        .team-photo {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 5px solid var(--primary-light);
+            transition: all 0.3s ease;
+        }
+
+        .team-member:hover .team-photo {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(69, 104, 220, 0.3);
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .social-link {
+            color: var(--primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            color: var(--accent);
+        }
+
+        .project-details {
+            background: var(--light-bg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-details::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: var(--gradient-light);
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .detail-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-top: 4px solid var(--primary);
+        }
+
+        .detail-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(69, 104, 220, 0.2);
+        }
+
+        .detail-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--gradient-light);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease;
+        }
+
+        .detail-card:hover::after {
+            transform: scaleX(1);
+        }
+
+        .contact {
+            background: var(--gradient-light);
+            color: var(--light-text);
+        }
+
+        .contact h2 {
+            color: var(--light-text);
+        }
+
+        .contact h2:after {
+            background: var(--accent);
+        }
+
+        .contact-container {
+            display: flex;
+            gap: 40px;
+            margin-top: 50px;
+            flex-wrap: wrap;
+        }
+
+        .contact-info {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .contact-form {
+            flex: 2;
+            min-width: 300px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--light-text);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .info-icon {
+            margin-right: 15px;
+            color: var(--accent);
+            font-size: 24px;
+        }
+
+        footer {
+            background: var(--gradient-dark);
+            color: var(--light-text);
+            padding: 30px 0;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-link {
+            color: var(--light-text);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--accent);
+        }
+
+        /* Animations */
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .gradient-animation {
+            background-size: 200% 200%;
+            animation: gradientBG 8s ease infinite;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .hero-content {
+                flex-direction: column;
+            }
+            
+            .hero-text {
+                padding-right: 0;
+                margin-bottom: 40px;
+            }
+            
+            .steps {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .step {
+                max-width: 100%;
+                margin-bottom: 40px;
+            }
+            
+            .process-line {
+                display: none;
+            }
+            
+            h1 {
+                font-size: 36px;
+            }
+            
+            h2 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header & Navigation -->
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3503/3503764.png" alt="KG Builder Pro Logo">
+                    Knowledge Graph Builder
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#how-it-works">How It Works</a></li>
+                    <li><a href="#tech-stack">Tech Stack</a></li>
+                    <li><a href="#team">Team</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero gradient-animation">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>Transform Unstructured Data into <span class="highlight">Knowledge Graphs</span></h1>
+                    <p>Knowledge Graph is an advanced tool that converts raw text, documents, URLs, and more into structured, interactive knowledge graphs with AI-powered analysis and visualization.</p>
+                    <div>
+                        <a href="index.html" class="btn pulse">Explore Knowledge</a>
+                        <a href="#features" class="btn btn-outline">Discover Features</a>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3503/3503635.png" alt="Knowledge Graph Visualization">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2>Powerful Features</h2>
+            <p style="text-align: center; max-width: 700px; margin: 0 auto 30px;">Knowledge Graph offers a comprehensive suite of data processing and visualization tools to transform unstructured content into actionable knowledge graphs.</p>
+            
+            <div class="feature-grid">
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">📄</div>
+                    <h3>Multi-Format Input Processing</h3>
+                    <p>Process raw text, PDFs, DOCX files, URLs, and YouTube video transcripts with our advanced data extraction engine.</p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Named Entity Recognition</h3>
+                    <p>Automatically identify and classify named entities such as people, organizations, locations, dates, and more using spaCy.</p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">🔗</div>
+                    <h3>Relationship Extraction</h3>
+                    <p>Identify connections between entities using sophisticated NLP algorithms and the Gemini API to build comprehensive knowledge graphs.</p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">😊</div>
+                    <h3>Sentiment Analysis</h3>
+                    <p>Analyze emotional tone and sentiment in content using TextBlob to extract deeper contextual meaning from your data.</p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">📊</div>
+                    <h3>Topic Modeling</h3>
+                    <p>Discover hidden themes and topics in your content through advanced statistical modeling and clustering techniques.</p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">📈</div>
+                    <h3>Multiple Visualizations</h3>
+                    <p>View your data as interactive graphs, word clouds, heatmaps, timelines, decision trees, and downloadable PDF reports.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="how-it-works">
+        <div class="container">
+            <h2>How It Works</h2>
+            <p style="text-align: center; max-width: 700px; margin: 0 auto 30px;">Our intuitive workflow transforms raw, unstructured data into meaningful visual insights in just a few simple steps.</p>
+            
+            <div class="steps-container">
+                <div class="process-line"></div>
+                <div class="steps">
+                    <div class="step fade-in">
+                        <div class="step-number">1</div>
+                        <div class="step-circle">
+                            <img src="https://cdn-icons-png.flaticon.com/512/3713/3713547.png" alt="Input Data">
+                        </div>
+                        <h3>Input Data</h3>
+                        <p>Upload documents, enter URLs, or paste raw text through our user-friendly interface.</p>
+                    </div>
+                    
+                    <div class="step fade-in">
+                        <div class="step-number">2</div>
+                        <div class="step-circle">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2491/2491962.png" alt="AI Processing">
+                        </div>
+                        <h3>AI Processing</h3>
+                        <p>Our system analyzes your content using NER, sentiment analysis, and relationship extraction.</p>
+                    </div>
+                    
+                    <div class="step fade-in">
+                        <div class="step-number">3</div>
+                        <div class="step-circle">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2885/2885257.png" alt="Graph Construction">
+                        </div>
+                        <h3>Graph Construction</h3>
+                        <p>Entities and relationships are organized into structured knowledge graphs.</p>
+                    </div>
+                    
+                    <div class="step fade-in">
+                        <div class="step-number">4</div>
+                        <div class="step-circle">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2103/2103633.png" alt="Visualization">
+                        </div>
+                        <h3>Visualization</h3>
+                        <p>Explore interactive visualizations, generate reports, and gain actionable insights.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack Section -->
+    <section id="tech-stack" class="tech-stack">
+        <div class="container">
+            <h2>Technology Stack</h2>
+            <p style="text-align: center; max-width: 700px; margin: 0 auto 30px;">Knowledge Graph Builder leverages cutting-edge technologies for efficient data processing and visualization.</p>
+            
+            <div class="tech-container">
+                <div class="tech-item fade-in">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python" class="tech-icon">
+                    <h3>Python</h3>
+                    <p>Core programming language</p>
+                </div>
+                
+                <div class="tech-item fade-in">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/flask/flask-original.svg" alt="Flask" class="tech-icon">
+                    <h3>Flask</h3>
+                    <p>Web framework</p>
+                </div>
+                
+                <div class="tech-item fade-in">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/8/88/SpaCy_logo.svg" alt="spaCy" class="tech-icon">
+                    <h3>spaCy</h3>
+                    <p>NLP & entity extraction</p>
+                </div>
+                
+                <div class="tech-item fade-in">
+                    <img src="https://textblob.readthedocs.io/en/dev/_static/textblob-logo.png" alt="TextBlob" class="tech-icon">
+                    <h3>TextBlob</h3>
+                    <p>Sentiment analysis</p>
+                </div>
+                
+                <div class="tech-item fade-in">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/d3js/d3js-original.svg" alt="D3.js" class="tech-icon">
+                    <h3>D3.js</h3>
+                    <p>Data visualizations</p>
+                </div>
+                
+                <div class="tech-item fade-in">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/networkx/networkx-original.svg" alt="NetworkX" class="tech-icon">
+                    <h3>NetworkX</h3>
+                    <p>Graph algorithms</p>
+                </div>
+                
+                <div class="tech-item fade-in">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/pandas/pandas-original.svg" alt="Pandas" class="tech-icon">
+                    <h3>Pandas</h3>
+                    <p>Data processing</p>
+                </div>
+                
+                <div class="tech-item fade-in">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/numpy/numpy-original.svg" alt="NumPy" class="tech-icon">
+                    <h3>NumPy</h3>
+                    <p>Numerical computing</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team" class="team">
+        <div class="container">
+            <h2>Meet the Team</h2>
+            <p style="text-align: center; max-width: 700px; margin: 0 auto 30px;">Knowledge Graph Builder was developed by a team of talented computer science students as their final-year academic project.</p>
+            
+            <div class="team-members">
+                <div class="team-member fade-in">
+                    <img src="https://nnrg.edu.in/spr/images/R21/217Z1A6756.JPG" alt="Thirumani Srikanth" class="team-photo">
+                    <h3>Thirumani Srikanth</h3>
+                    <p>Backend Development & NLP Integration</p>
+                    <div class="social-links">
+                        <a href="https://github.com/srikanth-thirumani" class="social-link">GitHub</a>
+                        <a href="https://www.linkedin.com/in/srikanth-thirumani-136180281" class="social-link">LinkedIn</a>
+                    </div>
+                </div>
+                
+                <div class="team-member fade-in">
+                    <img src="https://nnrg.edu.in/spr/images/R21/217Z1A6732.JPG" alt="Srija Reddy" class="team-photo">
+                    <h3>Srija Reddy</h3>
+                    <p>Data Processing & Visualization</p>
+                    <div class="social-links">
+                        <a href="#" class="social-link">GitHub</a>
+                        <a href="#" class="social-link">LinkedIn</a>
+                    </div>
+                </div>
+                
+                <div class="team-member fade-in">
+                    <img src="https://nnrg.edu.in/spr/images/R21/217Z1A6701.JPG" alt="Abhiram Reddy" class="team-photo">
+                    <h3>Abhiram Reddy</h3>
+                    <p>Frontend Development & UI/UX Design</p>
+                    <div class="social-links">
+                        <a href="#" class="social-link">GitHub</a>
+                        <a href="#" class="social-link">LinkedIn</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Project Details Section -->
+    <section id="project-details" class="project-details">
+        <div class="container">
+            <h2>Project Details</h2>
+            <p style="text-align: center; max-width: 700px; margin: 0 auto 30px;">Knowledge Graph Builder was developed as a comprehensive solution for knowledge graph construction from unstructured data sources.</p>
+            
+            <div class="detail-grid">
+                <div class="detail-card fade-in">
+                    <h3>Academic Context</h3>
+                    <p>This project was developed as a final-year academic project, focusing on the application of natural language processing and knowledge graph technologies to solve real-world information extraction challenges.</p>
+                </div>
+                
+                <div class="detail-card fade-in">
+                    <h3>Research Methodology</h3>
+                    <p>Our approach incorporates the latest research in NLP, including transformer-based models for entity and relationship extraction, combined with traditional graph theory for knowledge representation.</p>
+                </div>
+                
+                <div class="detail-card fade-in">
+                    <h3>Technical Challenges</h3>
+                    <p>Key challenges included accurately identifying complex relationships between entities, optimizing graph visualization for large datasets, and creating an intuitive user interface for non-technical users.</p>
+                </div>
+                
+                <div class="detail-card fade-in">
+                    <h3>Future Development</h3>
+                    <p>We plan to enhance Knowledge Graph Builder with additional features such as multi-language support, more advanced reasoning capabilities, and integration with external knowledge bases.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2>Contact Us</h2>
+            <p style="text-align: center; max-width: 700px; margin: 0 auto 30px;">Have questions about Knowledge Graph Builder? We'd love to hear from you!</p>
+            
+            <div class="contact-container">
+                <div class="contact-info">
+                    <h3>Get in Touch</h3>
+                    
+                    <div class="info-item">
+                        <div class="info-icon">📧</div>
+                        <div>
+                            <p><strong>Email</strong></p>
+                            <p>srikanththirumani01@gmail.com</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-icon">🏢</div>
+                        <div>
+                            <p><strong>NNRG</strong></p>
+                            <p>Department of Computer Science(Data Science)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-icon">🌐</div>
+                        <div>
+                            <p><strong>Project Repository</strong></p>
+                            <p>https://github.com/srikanth-thirumani</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="contact-form">
+                    <h3>Send a Message</h3>
+                    
+                    <form id="contactForm">
+                        <div class="form-group">
+                            <input type="text" class="form-control" placeholder="Your Name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <input type="email" class="form-control" placeholder="Your Email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <input type="text" class="form-control" placeholder="Subject">
+                        </div>
+                        
+                        <div class="form-group">
+                            <textarea class="form-control" placeholder="Your Message" required></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn pulse">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="logo" style="justify-content: center; margin-bottom: 20px;">
+                <img src="https://cdn-icons-png.flaticon.com/512/3503/3503764.png" alt="KG Builder Pro Logo">
+                Knowledge Graph Builder
+            </div>
+            
+            <div class="footer-links">
+                <a href="#home" class="footer-link">Home</a>
+                <a href="#features" class="footer-link">Features</a>
+                <a href="#how-it-works" class="footer-link">How It Works</a>
+                <a href="#tech-stack" class="footer-link">Tech Stack</a>
+                <a href="#team" class="footer-link">Team</a>
+                <a href="#contact" class="footer-link">Contact</a>
+            </div>
+            
+            <p>&copy; 2025 Knowledge Graph Builder. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // Animation on scroll
+        const fadeElements = document.querySelectorAll('.fade-in');
+        
+        function checkFade() {
+            fadeElements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+                
+                if (elementTop < windowHeight - 100) {
+                    element.classList.add('visible');
+                }
+            });
+        }
+        
+        // Initial check
+        checkFade();
+        
+        // Check on scroll
+        window.addEventListener('scroll', checkFade);
+        
+        // Form submission (prevent default for demo)
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Thank you for your message! This is a demo form.');
+            this.reset();
+        });
+    </script>
+</body>
+</html>
